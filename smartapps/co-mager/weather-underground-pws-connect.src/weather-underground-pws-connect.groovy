@@ -3,10 +3,13 @@
  *
  *  Copyright 2015 Andrew Mager
  *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License. You may obtain a copy of the License at:
+ *  # CHANGELOG
+ *  Version 1.0 - Initial release
+ *  Version 1.1 - Supports Celsius temperature scale automatically
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *  # LICENSE
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
@@ -35,6 +38,7 @@ preferences {
         input "humidity", "capability.relativeHumidityMeasurement", title: "Humidity", required: true
     }
     section("Configure your Weather Underground credentials") {
+        paragraph "Find your weather station ID here: http://goo.gl/SCbk5S"
         input "weatherID", "text", title: "Weather Station ID", required: true
         input "password", "password", title: "Weather Underground password", required: true
     }
@@ -71,10 +75,18 @@ def initialize() {
 */
 def updateCurrentWeather() {
 
+    def temp = temp.currentTemperature
+    def humidity = humidity.currentHumidity
+    
+    // If the user's temperature scale is Celsius, convert to Farenheit
+    if (getTemperatureScale() == "C") {
+        temp = convertCtoF(temp)
+    }
+
     // Logs of the current data from the sensor
-    log.trace "Temp: " + temp.currentTemperature
-    log.trace "Humidity: " + humidity.currentHumidity
-    log.trace "Dew Point: " + calculateDewPoint(temp.currentTemperature, humidity.currentHumidity)
+    log.trace "Temp: " + temp + "° F"
+    log.trace "Humidity: " + humidity
+    log.trace "Dew Point: " + calculateDewPoint(temp, humidity)
 
     // Builds the URL that will be sent to Weather Underground to update your PWS
     def params = [
@@ -84,9 +96,9 @@ def updateCurrentWeather() {
             "ID": weatherID,
             "PASSWORD": password,
             "dateutc": "now",
-            "tempf": temp.currentTemperature,
-            "humidity": humidity.currentHumidity,
-            "dewptf": calculateDewPoint(temp.currentTemperature, humidity.currentHumidity),
+            "tempf": temp,
+            "humidity": humidity,
+            "dewptf": calculateDewPoint(temp, humidity),
             "action": "updateraw",
             "softwaretype": "SmartThings"
         ]
@@ -108,4 +120,9 @@ def calculateDewPoint(t, rh) {
     def dp = 243.04 * ( Math.log(rh / 100) + ( (17.625 * t) / (243.04 + t) ) ) / (17.625 - Math.log(rh / 100) - ( (17.625 * t) / (243.04 + t) ) ) 
     // Format the response for Weather Underground
     return new DecimalFormat("##.##").format(dp)
+}
+
+def convertCtoF(tempC) {
+    def tempF = tempC * (9/5) + 32
+    return tempF
 }
