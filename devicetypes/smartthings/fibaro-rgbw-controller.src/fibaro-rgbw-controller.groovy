@@ -19,7 +19,12 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  */
-
+ 
+ /*
+ Todo's
+    1. Incorporate javadoc information and formatting
+ */
+ 
  metadata {
 
 	definition (name: "Fibaro RGBW Controller", namespace: "smartthings", author: "Todd Wackford") {
@@ -189,25 +194,25 @@
                  "levelSliderControl", 
                  "rgbSelector", 
                  "whiteSliderControl", 
-                 /*"softwhite",
+                 "softwhite",
                  "daylight",
                  "warmwhite",
                  "red", 
                  "green", 
                  "blue",
-                 "white",
                  "cyan",
                  "magenta",
                  "orange",
                  "purple",
-                 "yellow",                 
+                 "yellow",
+                 "white",
                  "fireplace",
                  "storm",
                  "deepfade",
                  "litefade",
                  "police",
-                 "power",
-                 "configure",*/
+                 //"power",
+                 //"configure",
                  "refresh"])
 	}
 }
@@ -218,9 +223,6 @@ def setAdjustedColor(value) {
     toggleTiles("off") //turn off the hard color tiles
 
     def level = device.latestValue("level")
-    if(level == null)
-    	level = 50
-    log.debug "level is: ${level}"
     value.level = level
 
 	def c = hexToRgb(value.hex) 
@@ -233,8 +235,6 @@ def setAdjustedColor(value) {
 
 def setColor(value) {
 	log.debug "setColor: ${value}"
-    log.debug "hue is: ${value.hue}"
-    log.debug "saturation is: ${value.saturation}"
     
     if (value.size() < 8)
     	toggleTiles("off")
@@ -314,15 +314,12 @@ def setColor(value) {
 }
 
 def setLevel(level) {
-	log.debug "setLevel($level)"
+	log.trace "setLevel($level)"
     
 	if (level == 0) { off() }
 	else if (device.latestValue("switch") == "off") { on() }
     
     def colorHex = device.latestValue("color")
-    if (colorHex == null)
-		colorHex = "#FFFFFF"
-        
     def c = hexToRgb(colorHex)
     
     def r = hex(c.r * (level/100))
@@ -341,8 +338,6 @@ def setWhiteLevel(value) {
     level = 255 * level/99 as Integer
     def channel = 0
 
-	if (device.latestValue("switch") == "off") { on() }
-    
     sendEvent(name: "whiteLevel", value: value)
     sendWhite(channel, value)       
 }
@@ -359,28 +354,14 @@ def sendRGB(redHex, greenHex, blueHex) {
 }
 
 
-def sendRGBW(redHex, greenHex, blueHex, whiteHex) {
-    def cmd = [String.format("33050400${whiteHex}02${redHex}03${greenHex}04${blueHex}%02X", 100),]
-    cmd
-}
-
-
 def configure() {
 	log.debug "Configuring Device For SmartThings Use"
-    
-
-    
     def cmds = []
     
     // send associate to group 3 to get sensor data reported only to hub
     cmds << zwave.associationV2.associationSet(groupingIdentifier:5, nodeId:[zwaveHubNodeId]).format()
-    
-    
-    //cmds << sendEvent(name: "level", value: 50)
-    //cmds << on()
-    //cmds << doColorButton("Green")
-    delayBetween(cmds, 500)
-    
+
+	delayBetween(cmds, 500)
 }
 
 def parse(String description) {
@@ -795,7 +776,6 @@ def doColorButton(colorName) {
     if (device.latestValue("switch") == "off") { on() }
 
     def level = device.latestValue("level")
-    def maxLevel = hex(99)
 
     toggleTiles(colorName.toLowerCase().replaceAll("\\s",""))
     
@@ -804,8 +784,6 @@ def doColorButton(colorName) {
     else if ( colorName == "Deep Fade" ) 	{ updateZwaveParam([paramNumber:72, value:8,  size:1]) }
     else if ( colorName == "Lite Fade" ) 	{ updateZwaveParam([paramNumber:72, value:9,  size:1]) }
     else if ( colorName == "Police" ) 		{ updateZwaveParam([paramNumber:72, value:10, size:1]) }
-    else if ( colorName == "White" ) 		{ String.format("33050400${maxLevel}02${hex(0)}03${hex(0)}04${hex(0)}%02X", 100) }
-    else if ( colorName == "Daylight" ) 	{ String.format("33050400${maxLevel}02${maxLevel}03${maxLevel}04${maxLevel}%02X", 100) }
     else {
 		def c = getColorData(colorName)
 		def newValue = ["hue": c.h, "saturation": c.s, "level": level, "red": c.r, "green": c.g, "blue": c.b, "hex": c.hex, "alpha": c.alpha]  
@@ -813,8 +791,7 @@ def doColorButton(colorName) {
     	def r = hex(c.r * (level/100))
     	def g = hex(c.g * (level/100))
     	def b = hex(c.b * (level/100))
-        def w = hex(0) //to turn off white channel with toggling tiles
-		sendRGBW(r, g, b, w)
+		sendRGB(r, g, b)
     }
 }
 
@@ -829,6 +806,7 @@ def toggleTiles(color) {
     state.colorTiles.each({
     	if ( it == color ) {
         	log.debug "Turning ${it} on"
+            device.displayName + " was closed"
             cmds << sendEvent(name: it, value: "on${it}", display: True, descriptionText: "${device.displayName} ${color} is 'ON'", isStateChange: true)
         } else {
         	//log.debug "Turning ${it} off"
