@@ -78,13 +78,10 @@ def listAvailableCameras() {
 
 
 def installed() {
-	log.debug "Installed with settings: ${settings}"
 	initialize()
 }
 
 def updated() {
-	log.debug "Updated with settings: ${settings}"
-
 	unsubscribe()
 	initialize()
 }
@@ -99,8 +96,6 @@ def initialize() {
 	{
 		state.suppressDelete = [:]
 	}
-
-	log.debug "settings: $settings"
 
 	def devices = cameras.collect { dni ->
 
