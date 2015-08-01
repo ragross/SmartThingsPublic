@@ -10,6 +10,8 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ 	AES V1.0
+    Mike Maxwell
  */
 metadata {
 	definition (name: "aeonMeterSwitch", namespace: "smartthings", author: "SmartThings") {
@@ -31,16 +33,16 @@ preferences {
        	input name: "param80", type: "enum", title: "State change notice:", description: "Type", required: true, options:["Off","Hail","Report"]
         
         //energy report, value change 0 - 32000 (watts)
-        input name: "param91", type: "number", title: "Wattage change reporting:", description: "Watts (0-32000)", required: false
+        input name: "param91", type: "number", title: "Wattage change reporting(0=off):", description: "Watts (0-32000)", required: false
         
         //energy report, percent change 0 - 255 (percent)
-        input name: "param92", type: "number", title: "Percent change reporting:", description: "Percent (1-100)", required: false
+        input name: "param92", type: "number", title: "Percent change reporting(0=off):", description: "Percent (1-100)", required: false
         
         //watt reporting interval 0 - 65535 (seconds)
-        input name: "param111", type: "number", title: "Watt report interval:", description: "Seconds (1-65535)", required: false
+        input name: "param111", type: "number", title: "Watt report interval(0=off):", description: "Seconds (0-65535)", required: false
         
         //KWH reporting interval 0 - 65535 (seconds)
-        input name: "param112", type: "number", title: "KWH report interval:", description: "Seconds (1-65535)", required: false
+        input name: "param112", type: "number", title: "KWH report interval(0=off):", description: "Seconds (0-65535)", required: false
         
         //input name: "blinker", type: "enum", title: "Set blinker mode:", description: "Blinker type", required: false, options:["Blink","Flasher","Strobe","5minute"]
 }
@@ -94,18 +96,22 @@ def updated() {
     def int param111 = settings.param111 ?: 0
     def int param112 = settings.param112 ?: 0
     def int param90 
-    def int param101
+    def int param101 //= 4
+    def int param102 //= 8
+    def int param103 = 0
     
-    if (param91 + param92 == 0) {
-    	param90 = 0
-        param101 = 4
-    }
-    else {
-    	param90 = 1
-        param101 = 15
-    }
+    if (param91 + param92 == 0) param90 = 0
+    else param90 = 1
     
-    log.info "p90:${param90} p91:${param91} p92:${param92} p101:${param101} p111:${param111} p112:${param112}"
+    if (param111 == 0) param101 = 0
+    else param101 = 4
+
+	if (param112 == 0) param102 = 0
+    else param102 = 8
+
+
+    log.info "p90:${param90} p91:${param91} p92:${param92} p111:${param111} p112:${param112}"
+    //log.info "msr:${state.MSR}"
 	try {
 		if (!state.MSR) {
 			response(zwave.manufacturerSpecificV2.manufacturerSpecificGet().format())
@@ -116,10 +122,24 @@ def updated() {
 			zwave.configurationV1.configurationSet(parameterNumber: 91, size: 2, scaledConfigurationValue: param91).format(),
 			zwave.configurationV1.configurationSet(parameterNumber: 92, size: 1, scaledConfigurationValue: param92).format(),
             zwave.configurationV1.configurationSet(parameterNumber: 101, size: 4, scaledConfigurationValue: param101).format(),
+            zwave.configurationV1.configurationSet(parameterNumber: 102, size: 4, scaledConfigurationValue: param102).format(),
+            zwave.configurationV1.configurationSet(parameterNumber: 103, size: 4, scaledConfigurationValue: param103).format(),
 			zwave.configurationV1.configurationSet(parameterNumber: 111, size: 4, scaledConfigurationValue: param111).format(),
 			zwave.configurationV1.configurationSet(parameterNumber: 112, size: 4, scaledConfigurationValue: param112).format()
+            //,zwave.versionV1.versionGet().format()
+            //,zwave.firmwareUpdateMdV1.firmwareMdGet().format()
 	]))
 }
+	//version:VersionReport(applicationSubVersion: 43, applicationVersion: 1, zWaveLibraryType: 3, zWaveProtocolSubVersion: 78, zWaveProtocolVersion: 2)
+        //class physicalgraph.zwave.commands.switchbinaryv1.SwitchBinaryGet 
+        //                    zwave.switchBinaryV1.switchBinaryGet().format(),
+        //class physicalgraph.zwave.commands.versionv1.VersionGet 
+		//					  zwave.versionV1.versionGet().format()			
+        //Firmware Md Get Command
+		//class physicalgraph.zwave.commands.firmwareupdatemdv1.FirmwareMdGet 
+        //                    zwave.firmwareUpdateMdV1.firmwareMdGet().format()
+		//Firmware Md Report Command
+		//class physicalgraph.zwave.commands.firmwareupdatemdv1.FirmwareMdReport 
 
 def parse(String description) {
 	def result = null
@@ -130,11 +150,32 @@ def parse(String description) {
 	}
 	return result
 }
+def zwaveEvent(physicalgraph.zwave.commands.firmwareupdatemdv1.FirmwareMdReport cmd) {
+	log.info "firmware:${cmd}"
+}
+
+def zwaveEvent(physicalgraph.zwave.commands.versionv1.VersionReport cmd) {
+	log.info "version:${cmd}"
+    //version:VersionReport(applicationSubVersion: 43, applicationVersion: 1, zWaveLibraryType: 3, zWaveProtocolSubVersion: 78, zWaveProtocolVersion: 2)
+}
+
+//class physicalgraph.zwave.commands.versionv1.VersionReport 
+//{
+//Short	applicationSubVersion
+//Short	applicationVersion
+//Short	zWaveLibraryType
+//Short	zWaveProtocolSubVersion
+//Short	zWaveProtocolVersion
+//List<Short>	payload
+//String format()
+//}
 
 def zwaveEvent(physicalgraph.zwave.commands.meterv1.MeterReport cmd) {
 	if (cmd.scale == 0) {
+    	log.info ("kWh:${cmd.scaledMeterValue}")
 		createEvent(name: "energy", value: cmd.scaledMeterValue, unit: "kWh")
 	} else if (cmd.scale == 1) {
+    	log.info ("kVAh:${cmd.scaledMeterValue}")
 		createEvent(name: "energy", value: cmd.scaledMeterValue, unit: "kVAh")
 	} else if (cmd.scale == 2) {
     	log.info ("watts:${cmd.scaledMeterValue}")
@@ -159,9 +200,9 @@ def zwaveEvent(physicalgraph.zwave.commands.switchbinaryv1.SwitchBinaryReport cm
 
 def zwaveEvent(physicalgraph.zwave.commands.manufacturerspecificv2.ManufacturerSpecificReport cmd) {
 	def result = []
-
+	//log.debug "cmd:${cmd}"
 	def msr = String.format("%04X-%04X-%04X", cmd.manufacturerId, cmd.productTypeId, cmd.productId)
-	log.debug "msr: $msr"
+	//log.debug "msr: $msr"
 	updateDataValue("MSR", msr)
 
 	// retypeBasedOnMSR()
