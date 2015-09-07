@@ -55,6 +55,7 @@ metadata {
 
 	}
     preferences {
+    	//try changing enums to this form:	options: ["january":1, "february":2, "march":3]
        	input name: "param80", type: "enum", title: "State change notice:", description: "Type", required: true, options:["Off","Hail","Report"]
         input name: "param120", type: "enum", title: "Set trigger mode:", description: "Switch type", required: true, options:["Momentary","Toggle","Three Way"]
         input name: "blinker", type: "enum", title: "Set blinker mode:", description: "Blinker type", required: false, options:["Blink","Flasher","Strobe","5minute"]

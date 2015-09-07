@@ -105,7 +105,7 @@ def updated() {
     
     if (param111 == 0) param101 = 0
     else param101 = 4
-
+    
 	if (param112 == 0) param102 = 0
     else param102 = 8
 
