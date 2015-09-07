@@ -304,11 +304,9 @@ def manageChildDevices(){
     	if (!settings.containsKey(it.value)){
         	log.debug "vt:${it} should be deleted"
     		//won't let me delete..., says in use???
-            //unsubscribe() //getChildDevice(nid)
-            
-            //networkID = app.id + "/" + it.value
-            //unsubscribe(getChildDevice(networkID))
-            //deleteChildDevice(networkID)
+            networkID = app.id + "/" + it.value
+            unsubscribe(getChildDevice(networkID))
+            deleteChildDevice(networkID)
         }
     }
  	//log.debug "vtMaps:${state.vtMaps}"

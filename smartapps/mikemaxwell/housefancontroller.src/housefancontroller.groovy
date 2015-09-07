@@ -24,13 +24,13 @@ preferences {
                 ,type		: "capability.switch"
             )
             
-            input(
-                name		: "loadSensor"
-                ,title		: "ST multi"
-                ,multiple	: false
-                ,required	: true
-                ,type		: "capability.threeAxis"
-            )
+            //input(
+            //    name		: "loadSensor"
+            //    ,title		: "ST multi"
+            //    ,multiple	: false
+            //    ,required	: true
+            //    ,type		: "capability.threeAxis"
+            //)
 		}
         section ("Control related...") {
         	input(
@@ -71,7 +71,7 @@ preferences {
                 ,multiple	: false
                 ,required	: true
                 ,type		: "enum"
-                ,options	: ["65","66","67","68","69","70","71","72"]
+                ,options	: ["68","69","70","71","72","73","74","75"]
             )
         	input(
                 name		: "fanHighTemp" 
@@ -105,26 +105,24 @@ def updated() {
 }
 
 def init() {
-    subscribe(loadSensor,"threeAxis",loadHandler)
+    //subscribe(loadSensor,"threeAxis",loadHandler)
     subscribe(contacts,"contact",contactHandler)
     subscribe(internalTemp,"temperature",internalTempHandler)
     subscribe(fan,"switch",fanHandler)
     //subscribe (thermostat,"",statHandler)
     subscribe(app, main)
     state.tempEnable = false
-    state.contactEnable = false
+    //state.contactEnable = false
     state.statEnable = false
     state.manOn = false
 }
 def main(evt) {
-	//def tempEnable = false
-    //def contactEnable = false
 	def stats = [:]
     def set = ["low":settings.fanLowTemp.toInteger(),"high":settings.fanHighTemp.toInteger(),"delta":settings.fanEnableOffset.toInteger()]
     def stat = [:]
     //loadSensor
-    stat = ["loadSensor":loadSensor.currentValue("threeAxis")]
-    stats << stat
+    //stat = ["loadSensor":loadSensor.currentValue("threeAxis")]
+    //stats << stat
     //externalTemp
     def eTemp = externalTemp.currentValue("temperature").toInteger()
     stat = ["externalTemp":eTemp]
