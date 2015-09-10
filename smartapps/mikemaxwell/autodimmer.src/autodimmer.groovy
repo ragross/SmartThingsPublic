@@ -1,7 +1,7 @@
 /**
  *  Auto Dimmer V1.9
  *
- *  Author: Mike Maxwell
+ *  Author: Mike Maxwell 
  	1.1 2014-12-21
     	--updated logging for more clarity
     1.2 2014-12-27
