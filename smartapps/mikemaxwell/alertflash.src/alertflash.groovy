@@ -28,7 +28,7 @@ definition(
 
 preferences {
     section("When I touch the app, flash these...") {
-        input "switches", "capability.switch", multiple: true
+        input "switches", "capability.alarm", multiple: true
     }
     section("Flash this way...") {
         input "type", "enum", title: "Type?", options:["Blink","Flasher","Strobe"], required: true

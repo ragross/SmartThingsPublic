@@ -77,7 +77,13 @@ preferences {
                 ,required	: false
                 ,type		: "capability.powerMeter"
             )
-
+            input(
+            	name		: "contactSensors"
+                ,title		: "Poll these Contact Sensors:"
+                ,multiple	: true
+                ,required	: false
+                ,type		: "capability.contactSensor"
+            )
 	}
 }
 
@@ -134,5 +140,10 @@ def dump(evt) {
     		log.info "${m.displayName} [${m.name}] watts:${m.currentValue("power")}"
     	}
 	}
-
+    if (contactSensors) {
+    	log.debug "^^^^^^^^^^^ contact ^^^^^^^^^^^"
+    	contactSensors.each() { m ->
+    		log.info "${m.displayName} [${m.name}] state:${m.currentValue("contact")}"
+    	}
+	}
 }

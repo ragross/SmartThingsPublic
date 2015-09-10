@@ -71,8 +71,10 @@ def motionHandler(evt) {
 	if (evt.value == "active") {
 		if (luxEnabled()) {
 			log.debug "motionHandler- turning on lights due to motion"
-			lights.on()
-			state.lastStatus = "on"
+            //if (state.lastStatus != "on") {
+				lights.on()
+				state.lastStatus = "on"
+            //}
 		}
 		state.motionStopTime = null
 	}

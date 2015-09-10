@@ -23,14 +23,13 @@ preferences {
                 ,required	: true
                 ,type		: "capability.switch"
             )
-            
-            //input(
-            //    name		: "loadSensor"
-            //    ,title		: "ST multi"
-            //    ,multiple	: false
-            //    ,required	: true
-            //    ,type		: "capability.threeAxis"
-            //)
+            input(
+                name		: "vsFan"
+                ,title		: "virtual Fan Switch"
+                ,multiple	: false
+                ,required	: true
+                ,type		: "capability.switch"
+            )
 		}
         section ("Control related...") {
         	input(
@@ -105,18 +104,20 @@ def updated() {
 }
 
 def init() {
-    //subscribe(loadSensor,"threeAxis",loadHandler)
+    //subscribe(vsFan,"threeAxis",loadHandler)
     subscribe(contacts,"contact",contactHandler)
     subscribe(internalTemp,"temperature",internalTempHandler)
-    subscribe(fan,"switch",fanHandler)
-    //subscribe (thermostat,"",statHandler)
+    subscribe(vsFan,"switch",vsHandler)
+    subscribe (thermostat,"thermostatMode",statHandler)
     subscribe(app, main)
     state.tempEnable = false
-    //state.contactEnable = false
     state.statEnable = false
     state.manOn = false
+	state.speedHigh = false
+    state.auto = false
 }
 def main(evt) {
+	//state.auto = true
 	def stats = [:]
     def set = ["low":settings.fanLowTemp.toInteger(),"high":settings.fanHighTemp.toInteger(),"delta":settings.fanEnableOffset.toInteger()]
     def stat = [:]
@@ -140,10 +141,12 @@ def main(evt) {
 		if (avgT > set.high) {
     		//set fan to high
         	stat = ["tempAction":"Temp met (High)"]
+            state.speedHigh = true
             state.tempEnable = true
     	} else if (avgT >= set.low) {
     		//set fan to low
         	stat = ["tempAction":"Temp met (Low)"]
+            state.speedHigh = false
             state.tempEnable = true
     	} else {
     		//turn fan off
@@ -191,45 +194,62 @@ def main(evt) {
 
     
     //fan control
-    def fanIsOn = fan.currentValue("switch") == "on"
-    if (state.contactEnable && state.tempEnable && !fanIsOn && state.statEnable) {
-    	stat = ["fanAction":"turn fan On"]
-    	fan.on()
-    } else if ((!state.contactEnable || !state.tempEnable || !state.statEnable) && fanIsOn ){
-    	stat = ["fanAction":"turn fan Off"]
-    	fan.off()
+    def fanIsOff = fan.currentValue("switch") == "off"
+    if (!state.manOn) {
+    	if (state.contactEnable && state.tempEnable && fanIsOff && state.statEnable) {
+    		if (state.speedHigh) {
+    	    	stat = ["Auto fanAction":"turn fan on High"]
+                state.auto = true
+				fan.onHigh()
+    	        vsFan.onHigh()
+    	    } else {
+    	    	stat = ["Auto fanAction":"turn fan on Low"]
+                state.auto = true
+    	    	fan.on()
+    	        vsFan.onLow()
+    	    }
+    	} else if ((!state.contactEnable || !state.tempEnable || !state.statEnable) && !fanIsOff){
+    		stat = ["Auto fanAction":"turn fan Off"]
+            state.auto = false
+    		fan.off()  
+    	    vsFan.off()
+    	} else {
+    		stat = ["Auto fanAction":"fan is:${fan.currentValue("switch")}"]
+    	}
+    } else if (state.contactEnable && state.statEnable) {
+    	stat = ["Manual fanAction":"fan is:${vsFan.currentValue("switch")}"]
+		if (vsFan.currentValue("switch") != fan.currentValue("switch")) {
+        	if (vsFan.currentValue("switch") == "onLow") {
+            	fan.on()
+            } else if (vsFan.currentValue("switch") == "onHigh") {
+            	fan.onHigh()
+            } else {
+            	fan.off()
+            }
+        }
+        
     } else {
-    	stat = ["fanAction":"fan is:${fan.currentValue("switch")}"]
+    	//turn it off
+        stat = ["Manual fanAction":"fan is:off"]
+        fan.off()
+        vsFan.off()
+        state.manOn = false
     }
     stats << stat
-    
+       
     log.info "set:${set}"
 	log.info "stats:${stats}"
 }
-def fanHandler(evt){
-	log.info "fantHandler- name:${evt.displayName} value:${evt.value}"
-    if (evt.value == "on") {
-    	state.manOn = false
-    } else {
-    	state.manOn = false
+def vsHandler(evt){
+	log.info "vsHandler- name:${evt.displayName} value:${evt.value} state.auto:${state.auto}"
+	//state.auto for both on conditions on auto
+    //
+    if (!state.auto && evt.value != "off") {
+    	state.manOn = true	
     }
 }
-
-def loadHandler(evt){
-	//log.info "loadHandler- name:${evt.displayName} value:${evt.value}"
-    //def parts = description.split(',')
-    def xyz = evt.value.split(',')
-    def z = xyz[2].toInteger()
-    if (z <= 50) {
-    	//off
-        log.info "loadHandler- state:OFF value:${evt.value}"
-    } else if (z >=275) {
-    	//high
-        log.info "loadHandler- state:HIGH value:${evt.value}"
-    } else {
-    	//low
-        log.info "loadHandler- state:LOW value:${evt.value}"
-    }
+def statHandler(evt) {
+	main(evt)
 }
 
 def contactHandler(evt){

@@ -1,5 +1,5 @@
 /**
- *  Auto Dimmer V1.8
+ *  Auto Dimmer V1.9
  *
  *  Author: Mike Maxwell
  	1.1 2014-12-21
@@ -21,6 +21,8 @@
     	--Had to change mode input and methods, broke for some reason
  	1.8 2015-06-29
     	--updated description and renamed app
+    1.9 2015-09-10
+    	--changed log output for better clarity
  */
 definition(
     name		: "autoDimmer",
@@ -187,12 +189,12 @@ def init(){
 }
 
 def dimHandler(evt) {
-	if (modeIsOK()) {
+	//get the dimmer that's been turned on
+	def dimmer = dimmers.find{it.id == evt.deviceId}
+	log.info "autoDimmer controlled switch: ${dimmer.displayName} was turned on..."
+    if (modeIsOK()) {
     	def newLevel = 0
-    
-		//get the dimmer that's been turned on
-		def dimmer = dimmers.find{it.id == evt.deviceId}
-    
+    	log.trace "modeOK: True"
     	//get its current dim level
     	def crntDimmerLevel = dimmer.currentValue("level").toInteger()
     
@@ -217,19 +219,23 @@ def dimHandler(evt) {
     		prefVar = prefVar + "_bright"
         	dimVar = dimBright
     	}
-   
-    	if (!this."${prefVar}") log.info "autoDimmer is using defaults..."
-    	else log.info "autoDimmer is using overrides..."
      
     	def newDimmerLevel = (this."${prefVar}" ?: dimVar).toInteger()
 		if (newDimmerLevel == 100) newDimmerLevel = 99
-    
-    	log.info "dimmer:${dimmer.displayName}, currentLevel:${crntDimmerLevel}%, requestedValue:${newDimmerLevel}%, currentLux:${crntLux}"
   
-    	if ( newDimmerLevel != crntDimmerLevel ) dimmer.setLevel(newDimmerLevel)
+    	if ( newDimmerLevel == crntDimmerLevel ){
+        	log.trace "changeRequired: False"
+        	//dimmer.setLevel(newDimmerLevel)
+        } else {
+            log.trace "changeRequired: True"
+            if (!this."${prefVar}") log.trace "useDefaults: true"
+    		else log.trace "useDefaults: False"
+            log.debug "dimmer:${dimmer.displayName}, currentLevel:${crntDimmerLevel}%, requestedLevel:${newDimmerLevel}%, currentLux:${crntLux}"
+        	dimmer.setLevel(newDimmerLevel)
+        }
     
 	} else {
-    	log.info 'skipping, current mode is not selected.'
+    	log.trace "modeOK: False"
     }
 }
 def modeIsOK() {
