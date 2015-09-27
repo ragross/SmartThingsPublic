@@ -243,7 +243,7 @@ def main(evt) {
 def vsHandler(evt){
 	log.info "vsHandler- name:${evt.displayName} value:${evt.value} state.auto:${state.auto}"
 	//state.auto for both on conditions on auto
-    //
+    log.info "vsHandler: isDigital ${evt.isDigital()}"
     if (!state.auto && evt.value != "off") {
     	state.manOn = true	
     }

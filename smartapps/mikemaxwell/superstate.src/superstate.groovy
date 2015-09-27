@@ -190,7 +190,7 @@ def scene(params){
         	    	name		: sceneID
                 	,type		: "text"
         	    	,title		: "Name for this Scene..."
-        	    	,required	: true
+        	    	,required	: false
         		)
         	}
     	}
@@ -288,7 +288,7 @@ def manageChildDevices(){
             	networkID = app.id + "/" + scene.key
           		vTileName = "${group.key}-${scene.key}"
             	vTileLabel = "${group.value}-${scene.value}"
-            	newVs = addChildDevice("mmaxwell", "superState switch", networkID, null, [name: "${vTileName}", label: "${vTileLabel}", completedSetup: true])
+            	newVs = addChildDevice("MikeMaxwell", "superState switch", networkID, null, [name: "${vTileName}", label: "${vTileLabel}", completedSetup: true])
             	deviceID = newVs.id
             	state.vtMaps << [(deviceID):scene.key]
         	} else {
@@ -298,17 +298,25 @@ def manageChildDevices(){
     }
     //now go thhrough vtMaps, remove any children not in settings
     //vt:2ef9cc26-c9c6-4445-bac9-59457f194f88=g1s2 should be deleted
-    
     state.vtMaps.each{ it ->
     	log.debug "vsm:${it}"
     	if (!settings.containsKey(it.value)){
         	log.debug "vt:${it} should be deleted"
     		//won't let me delete..., says in use???
+            /*
+            def delete = getChildDevice(params.dni)
+            //removeChildDevices(delete)
+            deleteChildDevice(delete.deviceNetworkId)
+
+            */
             networkID = app.id + "/" + it.value
-            unsubscribe(getChildDevice(networkID))
-            deleteChildDevice(networkID)
+            //unsubscribe(getChildDevice(networkID))
+            def device = getChildDevice(networkID)
+            unsubscribe(device.deviceNetworkId)
+            deleteChildDevice(device.deviceNetworkId)
         }
     }
+    
  	//log.debug "vtMaps:${state.vtMaps}"
 }
 
