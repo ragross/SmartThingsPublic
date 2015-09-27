@@ -1,5 +1,5 @@
 /**
- *  zoneMotionChild
+ *  zoneMotionChild v 1.0 2015-09-27
  *
  *  Copyright 2015 Mike Maxwell
  *
