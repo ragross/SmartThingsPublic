@@ -1,5 +1,5 @@
 /**
- *  Auto Dimmer V1.9
+ *  Auto Dimmer V2.0
  *
  *  Author: Mike Maxwell 
  	1.1 2014-12-21
@@ -23,160 +23,35 @@
     	--updated description and renamed app
     1.9 2015-09-10
     	--changed log output for better clarity
+	2.0 2015-09-29
+		--complete front end re-write, dynamic pages galore
+		--implemented dynamic adjustment option, with gradual adjustable ramp rate changes
  */
 definition(
-    name		: "autoDimmer",
-    namespace	: "MikeMaxwell",
-    author		: "Mike Maxwell",
-    description	: 
-
-"This add on smartApp automatically adjusts dimmer levels when dimmer(s) are turned on from physical switches or other smartApps, levels are set based on lux (illuminance) sensor readings and the dimmer levels that you specify." + 
-"This smartApp does not turn on dimmers directly, this allows you to retain all your existing on/off smartApps. This smartApp provides intelligent level management to your existing setup.",
-    category	: "Convenience",
-    iconUrl		: "https://s3.amazonaws.com/smartapp-icons/Meta/light_outlet-luminance.png",
-    iconX2Url	: "https://s3.amazonaws.com/smartapp-icons/Meta/light_outlet-luminance@2x.png"
+    name			: "autoDimmer",
+    namespace		: "MikeMaxwell",
+    author			: "Mike Maxwell",
+    description		: "This add on smartApp automatically adjusts dimmer levels when dimmer(s) are turned on from physical switches or other smartApps.\n" +
+					"Levels are set based on lux (illuminance) sensor readings and the dimmer levels that you specify." + 
+					"This smartApp does not turn on dimmers directly, this allows you to retain all your existing on/off smartApps.\n"+
+					"autoDimmer provides intelligent level management to your existing automations.",
+    category		: "My Apps",
+    iconUrl			: "https://s3.amazonaws.com/smartapp-icons/Convenience/smartlights.png",
+    iconX2Url		: "https://s3.amazonaws.com/smartapp-icons/Convenience/smartlights@2x.png",
+    iconX3Url		: "https://s3.amazonaws.com/smartapp-icons/Convenience/smartlights@3x.png"
 )
 
 preferences {
-    page(name: "page1", title: "autoDimmer Configuration", nextPage: "page2", uninstall: true) {
-		section("About: 'autoDimmer snap-in'"){
-        	paragraph 	"This add on smartApp automatically adjusts dimmer levels when dimmer(s) are turned on from physical switches or other smartApps, levels are set based on lux (illuminance) sensor readings and the dimmer levels that you specify." + 
-						"This smartApp does not turn on dimmers directly, this allows you to retain all your existing on/off smartApps. This smartApp provides intelligent level management to your existing setup."
-        }
-		section ("Setup:"){
-            input(
-            	name		: "luxOmatic"
-                ,title		: "Use this lux Sensor..."
-                ,multiple	: false
-                ,required	: true
-                ,type		: "capability.illuminanceMeasurement"
-            )
-            input(
-                name		: "dimDark"
-                ,title		: "Select default dim level to use when it's dark out..."
-                ,multiple	: false
-                ,required	: true
-                ,type		: "enum"
-                ,options	: ["10","20","30","40","50","60"]
-            )
-            input(
-            	name		: "luxDark"
-                ,title		: "Select maximum lux level to be considered as Dark..."
-                ,multiple	: false
-                ,required	: true
-                ,type		: "enum"
-                ,options	: ["10","25","50","75","100"]
-            )
-             input(
-                name		: "dimDusk"
-                ,title		: "Select default dim level to use during dusk/dawn..."
-                ,multiple	: false
-                ,required	: true
-                ,type		: "enum",
-                ,options	: ["10","20","30","40","50","60"]
-            )
-            input(
-            	name		: "luxDusk"
-                ,title		: "Select maximum lux level to be considered as dusk/dawn..."
-                ,multiple	: false
-                ,required	: true
-                ,type		: "enum"
-                ,options	: ["100","125","150","175","200","300","400","500","600"]
-            )
-            input(
-                name		: "dimDay" 
-                ,title		: "Select default dim level to use during an overcast day..."
-                ,multiple	: false
-                ,required	: true
-                ,type		: "enum"
-                ,options	: ["40","50","60","70","80","90","100"]
-            )
-            input(
-            	name		: "luxBright"
-                ,title		: "Select maximum lux level to be considered as overcast..."
-                ,multiple	: false
-                ,required	: true
-                ,type		: "enum"
-                ,options	: ["500","1000","2000","3000"]
-            )
-			input(
-                name		: "dimBright" 
-                ,title		: "Select default dim level to use when it's sunny outside..."
-                ,multiple	: false
-                ,required	: true
-                ,type		: "enum"
-                ,options	: ["40","50","60","70","80","90","100"]
-            )
-			input(
-            	name		: "dimmers"
-                ,title		: "Manage these Dimmers..."
-                ,multiple	: true
-                ,required	: true
-                ,type		: "capability.switchLevel"
-            )
-            input(
-            	name		: "modes"
-                ,type		: "mode"
-                ,title		: "Set for specific mode(s)"
-                ,multiple	: true
-                ,required	: false
-            )
-        }
-    }
-
-    page(name: "page2", title: "Set individual dimmer levels to override the default settings.", install: true, uninstall: false)
-
-}
-
-def page2() {
-    return dynamicPage(name: "page2") {
-    	//loop through selected dimmers
-        dimmers.each() { dimmer ->
-        	def safeName = dimmer.displayName.replaceAll(/\W/,"")
-            section ([hideable: true, hidden: true], "${dimmer.displayName} overrides...") {
-                input(
-                    name					: safeName + "_dark"
-                    ,title					: "Dark level"
-                    ,multiple				: false
-                    ,required				: false
-                    ,type					: "enum"
-                    ,options				: ["10","20","30","40","50","60"]
-                    ,refreshAfterSelection	:true
-                )
-                input(
-                    name					: safeName + "_dusk" 
-                    ,title					: "Dusk/Dawn level"
-                    ,multiple				: false
-                    ,required				: false
-                    ,type					: "enum"
-                    ,options				: ["40","50","60","70","80"]
-                    ,refreshAfterSelection	:true
-                )
-                input(
-                    name					: safeName + "_day" 
-                    ,title					: "Day level"
-                    ,multiple				: false
-                    ,required				: false
-                    ,type					: "enum"
-                    ,options				: ["40","50","60","70","80","90","100"]
-                    ,refreshAfterSelection	:true
-                )
-                input(
-                    name					: safeName + "_bright" 
-                    ,title					: "Bright level"
-                    ,multiple				: false
-                    ,required				: false
-                    ,type					: "enum"
-                    ,options				: ["40","50","60","70","80","90","100"]
-                    ,refreshAfterSelection	:true
-                )
-
-			}
-    	}
-    }
+	page(name: "main")
+    page(name: "aboutMe", nextPage	: "main")
+    page(name: "luxPage") //, nextPage	: "dimmersPage")
+    page(name: "dimmersPage", nextPage	: "main")
+    page(name: "overridePage")
+    page(name: "dimmerOptions")
 }
 
 def installed() {
+	state.anyOptionsSet = false
    init()
 }
 
@@ -184,23 +59,47 @@ def updated() {
 	unsubscribe()
     init()
 }
-def init(){
-   subscribe(dimmers, "switch.on", dimHandler)
-}
 
+def init(){
+   	subscribe(dimmers, "switch.on", dimHandler)
+   	subscribe(luxOmatic, "illuminance", luxHandler)
+}
 def dimHandler(evt) {
 	//get the dimmer that's been turned on
 	def dimmer = dimmers.find{it.id == evt.deviceId}
-	log.info "autoDimmer controlled switch: ${dimmer.displayName} was turned on..."
-    if (modeIsOK()) {
+	log.trace "${dimmer.displayName} was turned on..."
+    setDimmer(dimmer,false)
+}
+
+def luxHandler(evt){
+	//see if any dimmers are set to auto lux adjust
+    def autoLuxers = settings.findAll{it.key.endsWith("_autoLux") && it.value == true}
+    if (autoLuxers){
+        autoLuxers.each{ al ->
+        	def dimmer = dimmers.find{it.id == al.key.replace("_autoLux","")}
+            if (dimmer.currentValue("switch") == "on") {
+            	if (evt){
+            		log.trace "${dimmer.displayName} detected a change in illummance..."
+            	} else {
+            		log.trace "${dimmer.displayName} detected a ramp request..."
+            	}
+            	setDimmer(dimmer,true)
+             }
+        }
+     }
+
+}
+
+def setDimmer(dimmer,isRamp){
+	if (modeIsOK()) {
     	def newLevel = 0
-    	log.trace "modeOK: True"
+    	//log.debug "modeOK: True"
     	//get its current dim level
     	def crntDimmerLevel = dimmer.currentValue("level").toInteger()
     
     	//get currentLux reading
     	def crntLux = luxOmatic.currentValue("illuminance").toInteger()
-    	def prefVar = dimmer.displayName.replaceAll(/\W/,"")
+        def prefVar = dimmer.id
     	def dimVar
     	if (crntLux < luxDark.toInteger()) {
     		//log.debug "mode:dark"
@@ -224,22 +123,332 @@ def dimHandler(evt) {
 		if (newDimmerLevel == 100) newDimmerLevel = 99
   
     	if ( newDimmerLevel == crntDimmerLevel ){
-        	log.trace "changeRequired: False"
-        	//dimmer.setLevel(newDimmerLevel)
+        	log.info "${dimmer.displayName}, changeRequired: False"
         } else {
-            log.trace "changeRequired: True"
-            if (!this."${prefVar}") log.trace "useDefaults: true"
-    		else log.trace "useDefaults: False"
-            log.debug "dimmer:${dimmer.displayName}, currentLevel:${crntDimmerLevel}%, requestedLevel:${newDimmerLevel}%, currentLux:${crntLux}"
-        	dimmer.setLevel(newDimmerLevel)
+            log.info "${dimmer.displayName}, changeRequired: True"
+            //if (!this."${prefVar}") log.debug "useDefaults: true"
+    		//else log.debug "useDefaults: False"
+            if (isRamp) {
+            	def rampRate  = dimmer.id
+                rampRate = rampRate + "_ramp"
+                def rampInt = (this."${rampRate}" ?: 2).toInteger()
+                //log.debug "rampRate:${rampInt}"
+                
+            	def rampLevel 
+                if (crntDimmerLevel < newDimmerLevel){
+                	rampLevel = crntDimmerLevel + rampInt
+                } else {
+                	rampLevel = crntDimmerLevel - rampInt
+                }
+            	log.info "${dimmer.displayName}, currentLevel:${crntDimmerLevel}%, requestedLevel:${newDimmerLevel}%, rampLevel:${rampLevel}%, currentLux:${crntLux}"
+        		dimmer.setLevel(rampLevel)
+                if (rampLevel != newDimmerLevel){
+                	//log.debug "call setDimmer again in 60 seconds..."
+                    runIn(60,luxHandler)
+                }
+            } else {
+                log.info "${dimmer.displayName}, currentLevel:${crntDimmerLevel}%, requestedLevel:${newDimmerLevel}%, currentLux:${crntLux}"
+	        	dimmer.setLevel(newDimmerLevel)
+            }
         }
-    
 	} else {
-    	log.trace "modeOK: False"
+    	//log.debug "modeOK: False"
     }
 }
+
+/* whatever methods * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 def modeIsOK() {
 	def result = !modes || modes.contains(location.mode)
 	return result
 }
+
+/* page methods	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+def main(){
+    def isLuxComplete = luxPageComplete() == "complete"
+    def isDimComplete = dimmersPageComplete() == "complete"
+	def allComplete = isLuxComplete && isDimComplete  
+    def toDo = null
+    if (!isLuxComplete){
+    	toDo = "luxPage"
+    } else if (!isDimComplete){
+    	toDo = "dimmersPage"
+    }
+    //log.info "main- allComplete: ${allComplete} lux:${isLuxComplete} dim:${isDimComplete}"
+
+	return dynamicPage(
+    	name		: "main"
+        ,title		: "Main Page"
+        ,nextPage	: toDo
+        ,install	: allComplete
+        ,uninstall	: true
+        ){
+            section(){
+                     href(
+                        name		: "ab"
+                        ,title		: "About Me..." 
+                        ,required	: false
+                        ,page		: "aboutMe"
+                        ,description: null
+                     )
+                     if (isLuxComplete){
+                         href(
+                            name		: "lp"
+                            ,title		: "Illuminance settings..." 
+                            ,required	: false
+                            ,page		: "luxPage"
+                            ,description: null
+                            ,state		: luxPageComplete()
+                        )
+                    }
+					if (isDimComplete){
+                        href(
+                            name		: "dp"
+                            ,title		: "Dimmers and defaults..." 
+                            ,required	: false
+                            ,page		: "dimmersPage"
+                            ,description: null
+                            ,state		: dimmersPageComplete()
+                        )
+                    }
+                    if (allComplete){
+                        href(
+                            name		: "op"
+                            ,title		: "Specific dimmer settings..." 
+                            ,required	: false
+                            ,page		: "overridePage"
+                            ,description: null
+                            ,state		: anyOptionsSet()
+                        )
+					}
+                    input(
+                        name		: "modes"
+                        ,type		: "mode"
+                        ,title		: "Set for specific mode(s)"
+                        ,multiple	: true
+                        ,required	: false
+                    )
+            }
+	}
+}
+def aboutMe(){
+	return dynamicPage(name: "aboutMe"){
+		section ("About Me"){
+             paragraph 	"This add on smartApp automatically adjusts dimmer levels when dimmer(s) are turned on from physical switches or other smartApps.\n" +
+						"Levels are set based on lux (illuminance) sensor readings and the dimmer levels that you specify." + 
+						"This smartApp does not turn on dimmers directly, this allows you to retain all your existing on/off smartApps.\n"+
+						"autoDimmer provides intelligent level management to your existing automations."
+        }
+    }
+}
+def luxPage(){
+	//, nextPage	: "dimmersPage")
+    def isDimComplete = dimmersPageComplete() == "complete"
+    def toDo = null
+    if (!isDimComplete){
+    	toDo = "dimmersPage"
+    } else if (!isDimComplete){
+    	toDo = "main"
+    }
+
+    return dynamicPage(name: "luxPage",nextPage: toDo){
+		section ("Illuminance settings"){
+            input(
+            	name		: "luxOmatic"
+                ,title		: "Use this illuminance Sensor..."
+                ,multiple	: false
+                ,required	: true
+                ,type		: "capability.illuminanceMeasurement"
+            )
+        }
+        section("Select Lux levels"){    
+            input(
+            	name		: "luxDark"
+                ,title		: "It's Dark below this level..."
+                ,multiple	: false
+                ,required	: true
+                ,type		: "enum"
+                ,options	: ["10":"10 Lux","25":"25 Lux","50":"50 Lux","75":"75 Lux","100":"100 Lux"]
+            )
+            input(
+            	name		: "luxDusk"
+                ,title		: "Dusk/Dawn is between Dark and here..."
+                ,multiple	: false
+                ,required	: true
+                ,type		: "enum"
+                ,options	: ["100":"100 Lux","125":"125 Lux","150":"150 Lux","175":"175 Lux","200":"200 Lux","300":"300 Lux","400":"400 Lux","500":"500 Lux","600":"600 Lux"]
+            )
+            input(
+            	name		: "luxBright"
+                ,title		: "Overcast is between Dusk/Dawn and here, above this level it's considered Sunny."
+                ,multiple	: false
+                ,required	: true
+                ,type		: "enum"
+                ,options	: ["500":"500 Lux","1000":"1000 Lux","2000":"2000 Lux","3000":"3000 Lux"]
+            )
+        }
+	}
+}
+def dimmersPage(){
+	return dynamicPage(name: "dimmersPage",title: "Dimmers and defaults"){
+    	section ("Default dim levels for each brigtness range"){
+            input(
+                name		: "dimDark"
+                ,title		: "When it's Dark out..."
+                ,multiple	: false
+                ,required	: true
+                ,type		: "enum"
+                ,options	: ["10":"10%","20":"20%","30":"30%","40":"40%","50":"50%","60":"60%"]
+            )
+             input(
+                name		: "dimDusk"
+                ,title		: "For Dusk/Dawn use this..."
+                ,multiple	: false
+                ,required	: true
+                ,type		: "enum",
+                ,options	: ["10":"10%","20":"20%","30":"30%","40":"40%","50":"50%","60":"60%"]
+            )
+            input(
+                name		: "dimDay" 
+                ,title		: "When it's Overcast..."
+                ,multiple	: false
+                ,required	: true
+                ,type		: "enum"
+                ,options	: ["40":"40%","50":"50%","60":"60%","70":"70%","80":"80%","90":"90%","100":"100%"]
+            )
+			input(
+                name		: "dimBright" 
+                ,title		: "When it's Sunny..."
+                ,multiple	: false
+                ,required	: true
+                ,type		: "enum"
+                ,options	: ["40":"40%","50":"50%","60":"60%","70":"70%","80":"80%","90":"90%","100":"100%"]
+            )        
+        }
+		section ("Dimmers to manage"){
+			input(
+            	name		: "dimmers"
+                ,multiple	: true
+                ,required	: true
+                ,type		: "capability.switchLevel"
+            )
+        }
+	}
+}
+def overridePage(){
+	state.anyOptionsSet = false
+	return dynamicPage(name: "overridePage"){
+    	section("Specific dimmer settings"){
+        	def sortedDimmers = dimmers.sort{it.displayName}
+            sortedDimmers.each() { dimmer ->
+                def safeName = dimmer.id
+                def name = dimmer.displayName
+                href(
+                    name		: safeName + "_pg"
+                    ,title		: name
+                    ,required	: false
+                    ,page		: "dimmerOptions"
+                    ,params		: [id:safeName,displayName:name]
+                    ,description: null
+                    ,state		: dimmerOptionsSelected(safeName)
+                )
+            }
+		}
+	}
+}
+def dimmerOptions(params){
+	def safeName
+    def displayName
+    if (params.id) {
+    	safeName = 	params.id
+        displayName = params.displayName
+    } else if (params.params) {
+    	safeName = 	params.params.id
+        displayName = params.params.displayName
+    } 
+    //log.info "safeName:${safeName} name:${displayName}"
+    return dynamicPage(name: "dimmerOptions") {
+            section("${displayName} Options") {
+				input(
+                	name					: safeName + "_autoLux"
+                    ,title					: "Auto adjust levels during LUX changes"
+                    ,required				: false
+                    ,type					: "bool"
+                )
+                input(
+                	name					: safeName + "_ramp"
+                    ,title					: "Percent rate of change for Auto adjust (2% default)"
+                    ,multiple				: false
+                    ,required				: false
+                    ,type					: "enum"
+                    ,options				: ["1":"1%","2":"2%","5":"5%"]
+                )
+            }
+            section("Set these to override the default settings."){
+				input(
+                    name					: safeName + "_dark"
+                    ,title					: "Dark level"
+                    ,multiple				: false
+                    ,required				: false
+                    ,type					: "enum"
+                    ,options				: ["10":"10%","20":"20%","30":"30%","40":"40%","50":"50%","60":"60%"]
+                )
+                input(
+                    name					: safeName + "_dusk" 
+                    ,title					: "Dusk/Dawn level"
+                    ,multiple				: false
+                    ,required				: false
+                    ,type					: "enum"
+                    ,options				: ["40":"40%","50":"50%","60":"60%","70":"70%","80":"80%"]
+                )
+                input(
+                    name					: safeName + "_day" 
+                    ,title					: "Overcast level"
+                    ,multiple				: false
+                    ,required				: false
+                    ,type					: "enum"
+                    ,options				: ["40":"40%","50":"50%","60":"60%","70":"70%","80":"80%","90":"90%","100":"100%"]
+                )
+                input(
+                    name					: safeName + "_bright" 
+                    ,title					: "Bright level"
+                    ,multiple				: false
+                    ,required				: false
+                    ,type					: "enum"
+                    ,options				: ["40":"40%","50":"50%","60":"60%","70":"70%","80":"80%","90":"90%","100":"100%"]
+                )
+			}
+    }
+}
+/* href methods	* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+def dimmersPageComplete(){
+	if (dimmers && dimDark && dimDusk && dimDay && dimBright){
+    	return "complete"
+    } else {
+    	return null
+    }
+}
+def dimmerOptionsSelected(safeName){
+	def optionsList = ["${safeName}_autoLux","${safeName}_dark","${safeName}_dusk","${safeName}_day","${safeName}_bright"]
+    if (optionsList.find{this."${it}"}){
+		state.anyOptionsSet = true
+		return "complete"
+    } else {
+    	return null
+    }
+}
+def anyOptionsSet(){
+    if (state.anyOptionsSet) {
+    	return "complete"
+    } else {
+    	return null
+    }
+}
+def luxPageComplete(){
+	if (luxOmatic && luxDark && luxDusk && luxBright){
+    	return "complete"
+    } else {
+    	return null
+    }
+}
+
 
