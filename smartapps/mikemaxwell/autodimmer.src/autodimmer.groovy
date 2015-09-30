@@ -131,22 +131,27 @@ def setDimmer(dimmer,isRamp){
             //if (!this."${prefVar}") log.debug "useDefaults: true"
     		//else log.debug "useDefaults: False"
             if (isRamp) {
-            	def rampRate  = dimmer.id
-                rampRate = rampRate + "_ramp"
-                def rampInt = (this."${rampRate}" ?: 2).toInteger()
-                //log.debug "rampRate:${rampInt}"
-                
-            	def rampLevel 
-                if (crntDimmerLevel < newDimmerLevel){
-                	rampLevel = crntDimmerLevel + rampInt
+            	if (newDimmerLevel == 0){
+                	log.info "${dimmer.displayName}, currentLevel:${crntDimmerLevel}%, requestedLevel:${newDimmerLevel}%, currentLux:${crntLux}"
+	        		dimmer.off()
                 } else {
-                	rampLevel = crntDimmerLevel - rampInt
-                }
-            	log.info "${dimmer.displayName}, currentLevel:${crntDimmerLevel}%, requestedLevel:${newDimmerLevel}%, rampLevel:${rampLevel}%, currentLux:${crntLux}"
-        		dimmer.setLevel(rampLevel)
-                if (rampLevel != newDimmerLevel){
-                	//log.debug "call setDimmer again in 60 seconds..."
-                    runIn(60,luxHandler)
+            		def rampRate  = dimmer.id
+                	rampRate = rampRate + "_ramp"
+                	def rampInt = (this."${rampRate}" ?: 2).toInteger()
+                	//log.debug "rampRate:${rampInt}"
+                
+            		def rampLevel 
+                	if (crntDimmerLevel < newDimmerLevel){
+                		rampLevel = crntDimmerLevel + rampInt
+                	} else {
+                		rampLevel = crntDimmerLevel - rampInt
+                	}
+            		log.info "${dimmer.displayName}, currentLevel:${crntDimmerLevel}%, requestedLevel:${newDimmerLevel}%, rampLevel:${rampLevel}%, currentLux:${crntLux}"
+        			dimmer.setLevel(rampLevel)
+                	if (rampLevel != newDimmerLevel){
+                		//log.debug "call setDimmer again in 60 seconds..."
+                    	runIn(60,luxHandler)
+                	}
                 }
             } else {
             	log.info "${dimmer.displayName}, currentLevel:${crntDimmerLevel}%, requestedLevel:${newDimmerLevel}%, currentLux:${crntLux}"
