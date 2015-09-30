@@ -1,5 +1,5 @@
 /**
- *  Auto Dimmer V2.0
+ *  Auto Dimmer V2.1
  *
  *  Author: Mike Maxwell 
  	1.1 2014-12-21
@@ -26,6 +26,8 @@
 	2.0 2015-09-29
 		--complete front end re-write, dynamic pages galore
 		--implemented dynamic adjustment option, with gradual adjustable ramp rate changes
+    2.1	2015-09-30
+    	--added dimmer specific level option (off)
  */
 definition(
     name			: "autoDimmer",
@@ -147,8 +149,13 @@ def setDimmer(dimmer,isRamp){
                     runIn(60,luxHandler)
                 }
             } else {
-                log.info "${dimmer.displayName}, currentLevel:${crntDimmerLevel}%, requestedLevel:${newDimmerLevel}%, currentLux:${crntLux}"
-	        	dimmer.setLevel(newDimmerLevel)
+            	log.info "${dimmer.displayName}, currentLevel:${crntDimmerLevel}%, requestedLevel:${newDimmerLevel}%, currentLux:${crntLux}"
+            	if (newDimmerLevel == 0){
+	        		dimmer.off()
+                } else {
+	        		dimmer.setLevel(newDimmerLevel)
+                }
+
             }
         }
 	} else {
@@ -390,7 +397,7 @@ def dimmerOptions(params){
                     ,multiple				: false
                     ,required				: false
                     ,type					: "enum"
-                    ,options				: ["10":"10%","20":"20%","30":"30%","40":"40%","50":"50%","60":"60%"]
+                    ,options				: ["0":"Off","10":"10%","20":"20%","30":"30%","40":"40%","50":"50%","60":"60%"]
                 )
                 input(
                     name					: safeName + "_dusk" 
@@ -398,7 +405,7 @@ def dimmerOptions(params){
                     ,multiple				: false
                     ,required				: false
                     ,type					: "enum"
-                    ,options				: ["40":"40%","50":"50%","60":"60%","70":"70%","80":"80%"]
+                    ,options				: ["0":"Off","40":"40%","50":"50%","60":"60%","70":"70%","80":"80%"]
                 )
                 input(
                     name					: safeName + "_day" 
@@ -406,7 +413,7 @@ def dimmerOptions(params){
                     ,multiple				: false
                     ,required				: false
                     ,type					: "enum"
-                    ,options				: ["40":"40%","50":"50%","60":"60%","70":"70%","80":"80%","90":"90%","100":"100%"]
+                    ,options				: ["0":"Off","40":"40%","50":"50%","60":"60%","70":"70%","80":"80%","90":"90%","100":"100%"]
                 )
                 input(
                     name					: safeName + "_bright" 
@@ -414,7 +421,7 @@ def dimmerOptions(params){
                     ,multiple				: false
                     ,required				: false
                     ,type					: "enum"
-                    ,options				: ["40":"40%","50":"50%","60":"60%","70":"70%","80":"80%","90":"90%","100":"100%"]
+                    ,options				: ["0":"Off","40":"40%","50":"50%","60":"60%","70":"70%","80":"80%","90":"90%","100":"100%"]
                 )
 			}
     }
