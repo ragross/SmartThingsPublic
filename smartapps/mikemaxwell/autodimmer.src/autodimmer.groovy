@@ -95,7 +95,7 @@ def luxHandler(evt){
 def setDimmer(dimmer,isRamp){
 	if (modeIsOK()) {
     	def newLevel = 0
-    	//log.debug "modeOK: True"
+    	log.debug "modeOK: True"
     	//get its current dim level
     	def crntDimmerLevel = dimmer.currentValue("level").toInteger()
     
@@ -164,7 +164,7 @@ def setDimmer(dimmer,isRamp){
             }
         }
 	} else {
-    	//log.debug "modeOK: False"
+    	log.debug "modeOK: False"
     }
 }
 
